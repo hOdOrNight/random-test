@@ -1,16 +1,47 @@
-- name: Set up Google Cloud
-  uses: google-github-actions/setup-gcloud@v2
-  with:
-    service_account_key: ${{ secrets.GCP_SA_KEY }}
-    project_id: ${{ env.PROJECT_ID }}
-    export_default_credentials: true
+name: Deploy Spring App to Cloud Run
 
-- name: Authenticate Docker for Artifact Registry
-  run: |
-    gcloud auth configure-docker us-central1-docker.pkg.dev
+on:
+  push:
+    branches: [master]
 
-- name: Build and push Docker image
-  run: |
-    IMAGE="us-central1-docker.pkg.dev/$PROJECT_ID/spring-run-repo/$SERVICE_NAME"
-    docker build -t $IMAGE .
-    docker push $IMAGE
+env:
+  PROJECT_ID: bright-link-466516-a1
+  REGION: us-central1
+  SERVICE_NAME: spring-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ env.PROJECT_ID }}
+          export_default_credentials: true
+
+      - name: Authenticate Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build Spring Boot app
+        run: |
+          ./mvnw clean package -DskipTests || mvn clean package -DskipTests
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE="us-central1-docker.pkg.dev/$PROJECT_ID/spring-run-repo/$SERVICE_NAME"
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy $SERVICE_NAME \
+            --image us-central1-docker.pkg.dev/$PROJECT_ID/spring-run-repo/$SERVICE_NAME \
+            --region $REGION \
+            --platform managed \
+            --allow-unauthenticated
