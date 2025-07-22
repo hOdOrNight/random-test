@@ -27,6 +27,11 @@ jobs:
       - name: Build with Maven
         run: mvn clean package -DskipTests
 
+      - name: Authenticate Docker to Artifact Registry
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
+
+
       - name: Build and Push Docker Image
         run: |
           IMAGE="us-central1-docker.pkg.dev/$PROJECT_ID/spring-run-repo/$SERVICE_NAME"
