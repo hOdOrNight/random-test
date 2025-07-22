@@ -2,7 +2,7 @@ name: Deploy Spring App to Cloud Run
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 env:
   PROJECT_ID: bright-link-466516-a1
