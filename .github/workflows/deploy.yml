@@ -25,12 +25,21 @@ jobs:
           export_default_credentials: true
 
       - name: Authenticate Docker for Artifact Registry
-        run: |
-          gcloud auth configure-docker us-central1-docker.pkg.dev
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
 
+      # ✅ INSERT LOGGING HERE
+      - name: Show Docker config
+        run: cat ~/.docker/config.json
+
+      - name: Show active gcloud credentials
+        run: gcloud auth list
+
+      - name: Show active access token (just to confirm auth works)
+        run: gcloud auth print-access-token
+
+      # 👇 Then continue with your build/push/deploy steps
       - name: Build Spring Boot app
-        run: |
-          ./mvnw clean package -DskipTests || mvn clean package -DskipTests
+        run: mvn clean package -DskipTests
 
       - name: Build and Push Docker Image
         run: |
